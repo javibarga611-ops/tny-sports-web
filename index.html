@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNY Sports - River vs Tigre</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #000;
+            color: #fff;
+        }
+
+        /* BARRA SUPERIOR CON HORA REAL COMPLETA */
+        .top-bar {
+            background-color: #00cc66;
+            color: #000;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-bar .tny-logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .top-bar .real-time {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* REPRODUCTOR YOUTUBE */
+        .youtube-player {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            position: relative;
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .youtube-player iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* CONTENEDOR PARTIDO */
+        .match-container {
+            background-color: #1a1a1a;
+            margin: 0 15px 15px 15px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        /* CRONÓMETRO PARTIDO */
+        .match-timer {
+            background-color: #000;
+            color: #00cc66;
+            font-size: 22px;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        /* MARCADOR Y EQUIPOS */
+        .score-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .team {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .score {
+            background-color: #000;
+            color: #00cc66;
+            font-size: 40px;
+            font-weight: bold;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid #00cc66;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .vs-text {
+            font-size: 24px;
+            color: #00cc66;
+        }
+
+        /* LISTA DE GOLES */
+        .goals-list {
+            background-color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .goals-list h4 {
+            color: #00cc66;
+            margin-bottom: 10px;
+        }
+        .goal-item {
+            font-size: 16px;
+            padding: 5px 0;
+        }
+
+        /* BOTONES */
+        .btn {
+            background-color: #00cc66;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- BARRA SUPERIOR CON HORA COMPLETA -->
+    <div class="top-bar">
+        <div class="tny-logo">TNY SPORTS</div>
+        <div class="real-time" id="full-time">--:--:--</div>
+    </div>
+
+    <!-- REPRODUCTOR YOUTUBE -->
+    <div class="youtube-player">
+        <iframe src="https://www.youtube.com/embed/ehCb5djj7OQ" 
+                title="River vs Tigre - TNY Sports"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+    </div>
+
+    <!-- CONTENEDOR PARTIDO -->
+    <div class="match-container">
+        <!-- CRONÓMETRO PARTIDO -->
+        <div class="match-timer" id="match-timer">🔜 TORNEO APERTURA - LISTO PARA COMENZAR</div>
+
+        <!-- MARCADOR Y EQUIPOS -->
+        <div class="score-area">
+            <div class="team-left">RIVER PLATE</div>
+            <div class="score-display">
+                <span id="river-score">0</span> - <span id="tigre-score">0</span>
+            </div>
+            <div class="team-right">TIGRE</div>
+        </div>
+
+        <!-- LISTA DE GOLES -->
+        <div class="goals-list">
+            <h4>GOLES MARCADOS</h4>
+            <div id="goals-container">
+                <p>⚽ ¡ESPERANDO EL PRIMER GOL DEL PARTIDO!</p>
+            </div>
+        </div>
+
+        <!-- BOTONES DE CONTROL -->
+        <button class="btn" onclick="startFirstHalf()">1ER TIEMPO</button>
+        <button class="btn" onclick="startSecondHalf()">2DO TIEMPO</button>
+        <button class="btn" onclick="addGoal('river')">GOL RIVER</button>
+        <button class="btn" onclick="addGoal('tigre')">GOL TIGRE</button>
+        <button class="btn" onclick="resetMatch()">REINICIAR</button>
+    </div>
+
+    <script>
+        // HORA REAL COMPLETA (HORA:MINUTOS:SEGUNDOS)
+        function updateFullTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('full-time').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateFullTime, 1000);
+        updateFullTime();
+
+        // CONTROL PARTIDO
+        let matchInterval;
+        let currentMinute = 0;
+        let currentHalf = 0;
+        let riverScore = 0;
+        let tigreScore = 0;
+
+        function startFirstHalf() {
+            clearInterval(matchInterval);
+            currentHalf = 1;
+            currentMinute = 0;
+            updateMatchTimer();
+            matchInterval = setInterval(() => {
+                currentMinute++;
+                if (currentMinute > 45) {
+                    clearInterval(matchInterval);
+                    document.getElementById('match-timer').textContent = "⏸️ ENTRETIEMPO - DESCANSO";
+                } else {
+                    updateMatchTimer();
+                }
+            }, 1000);
+        }
+
+        function startSecondHalf() {
+            clearInterval(matchInterval);
+            currentHalf = 2;
+            currentMinute = 46;
+            updateMatchTimer();
+            matchInterval = setInterval(() => {
+                currentMinute++;
+                if (currentMinute > 90) {
+                    clearInterval(matchInterval);
+                    document.getElementById('match-timer').textContent = "🏁 FINAL DEL PARTIDO";
+                } else {
+                    updateMatchTimer();
+                }
+            }, 1000);
+        }
+
+        function updateMatchTimer() {
+            if (currentHalf === 1) {
+                document.getElementById('match-timer').textContent = `⏱️ 1ER TIEMPO - ${currentMinute}'`;
+            } else if (currentHalf === 2) {
+                document.getElementById('match-timer').textContent = `⏱️ 2DO TIEMPO - ${currentMinute}'`;
+            }
+        }
+
+        function addGoal(team) {
+            if (currentHalf === 0) {
+                alert("El partido aún no comenzó!");
+                return;
+            }
+
+            const teamNames = team === 'river' ? 'RIVER PLATE' : 'TIGRE';
+            const timeText = currentHalf === 1 ? `${currentMinute}' (1er Tiempo)` : `${currentMinute}' (2do Tiempo)`;
+
+            if (team === 'river') {
+                riverScore++;
+                document.getElementById('river-score').textContent = riverScore;
+            } else {
+                tigreScore++;
+                document.getElementById('tigre-score').textContent = tigreScore;
+            }
+
+            const goalsContainer = document.getElementById('goals-container');
+            if (goalsContainer.querySelector('p')) goalsContainer.innerHTML = '';
+            
+            const newGoal = document.createElement('div');
+            newGoal.className = 'goal-item';
+            newGoal.textContent = `⚽ ${teamNames} - ${timeText}`;
+            goalsContainer.appendChild(newGoal);
+        }
+
+        function resetMatch() {
+            clearInterval(matchInterval);
+            currentHalf = 0;
+            currentMinute = 0;
+            riverScore = 0;
+            tigreScore = 0;
+            
+            document.getElementById('match-timer').textContent = "🔜 TORNEO APERTURA - LISTO PARA COMENZAR";
+            document.getElementById('river-score').textContent = "0";
+            document.getElementById('tigre-score').textContent = "0";
+            document.getElementById('goals-container').innerHTML = '<p>⚽ ¡ESPERANDO EL PRIMER GOL DEL PARTIDO!</p>';
+        }
+    </script>
+</body>
+</html>
